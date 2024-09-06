@@ -22,6 +22,11 @@
         .monster-actions {
             margin-top: 10px;
         }
+        .result-box {
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
@@ -79,11 +84,22 @@
                 <div class="monster-actions">
                     <label for="damage">Infliger des dégâts :</label>
                     <input type="number" class="damage-input" min="0" value="0">
+                    
+                    <!-- Sélection pour dégâts combinés -->
+                    <label for="combined-damage">Dégâts combinés :</label>
+                    <input type="checkbox" class="combined-damage"><br><br>
+                    
                     <button class="apply-damage">Appliquer</button><br><br>
                     
                     <label for="new-resistance">Modifier Résistance (%):</label>
                     <input type="number" class="new-resistance" value="${resistance}" min="0" max="100"><br><br>
                     
+                    <label for="rand">Calcul du rand :</label>
+                    <input type="text" class="rand-input" placeholder="Résultats du rand (ex: 902 + 345)"><br><br>
+                    <button class="calculate-rand">Calculer Rand</button><br><br>
+
+                    <div class="result-box"></div>
+
                     <button class="delete-monster">Supprimer</button>
                 </div>
             `;
@@ -91,11 +107,32 @@
 
             // Appliquer des dégâts
             const damageInput = monsterDiv.querySelector('.damage-input');
+            const combinedDamageCheckbox = monsterDiv.querySelector('.combined-damage');
             const applyDamageBtn = monsterDiv.querySelector('.apply-damage');
             applyDamageBtn.addEventListener('click', function () {
                 const damage = parseInt(damageInput.value);
                 const currentResistance = parseInt(monsterDiv.querySelector('.resistance').textContent);
-                applyDamage(monsterDiv, damage, currentResistance);
+                const isCombinedDamage = combinedDamageCheckbox.checked;
+                applyDamage(monsterDiv, damage, currentResistance, isCombinedDamage);
+            });
+
+            // Calculer le rand
+            const randInput = monsterDiv.querySelector('.rand-input');
+            const calculateRandBtn = monsterDiv.querySelector('.calculate-rand');
+            const resultBox = monsterDiv.querySelector('.result-box');
+            calculateRandBtn.addEventListener('click', function () {
+                const randValues = randInput.value.split('+').map(rand => rand.trim()); // Diviser les résultats par "+"
+                const difficulty = parseInt(monsterDiv.querySelector('.difficulty').textContent);
+                const calculatedResults = randValues.map(rand => calculateRand(parseInt(rand))); // Calculer chaque rand
+                const totalRand = calculatedResults.reduce((total, result) => total + result, 0); // Somme des résultats
+                const potentialDamage = Math.max(0, totalRand - difficulty);
+
+                // Afficher le résumé du calcul
+                resultBox.innerHTML = `
+                    <strong>Résultats des Rands :</strong> ${calculatedResults.join(' + ')} = ${totalRand}<br>
+                    <strong>Difficulté du Monstre :</strong> ${difficulty}<br>
+                    <strong>Dégâts potentiels :</strong> ${potentialDamage}
+                `;
             });
 
             // Supprimer un monstre
@@ -115,15 +152,23 @@
         }
 
         // Fonction pour appliquer des dégâts à un monstre
-        function applyDamage(monsterDiv, damage, resistance) {
+        function applyDamage(monsterDiv, damage, resistance, isCombinedDamage) {
             const hpSpan = monsterDiv.querySelector('.hp');
             const difficultySpan = monsterDiv.querySelector('.difficulty');
 
             let currentHp = parseInt(hpSpan.textContent);
             let currentDifficulty = parseInt(difficultySpan.textContent);
 
-            // Appliquer la résistance et infliger les dégâts
-            const effectiveDamage = Math.round(damage * (1 - resistance / 100));
+            let effectiveDamage;
+
+            // Si dégâts combinés, appliquer la résistance
+            if (isCombinedDamage) {
+                effectiveDamage = Math.round(damage * (1 - resistance / 100));
+            } else {
+                effectiveDamage = damage; // Dégâts normaux sans prendre en compte la résistance
+            }
+
+            // Réduire les PV et la difficulté en fonction des dégâts infligés
             currentHp = Math.max(0, currentHp - effectiveDamage);
             currentDifficulty = Math.max(0, currentDifficulty - effectiveDamage);
 
@@ -131,7 +176,101 @@
             hpSpan.textContent = currentHp;
             difficultySpan.textContent = currentDifficulty;
         }
+
+        // Fonction pour calculer le rand en additionnant les chiffres
+        function calculateRand(randValue) {
+            const digits = randValue.toString().split('');
+            let total = 0;
+            digits.forEach(digit => {
+                if (digit === '0') {
+                    total += 10; // Zéro compte comme 10
+                } else {
+                    total += parseInt(digit);
+                }
+            });
+            return total;
+        }
     </script>
+<div class="combat-system">
+    <h3>Le Système de Dés</h3>
+    <p>
+        <strong>Dé utilisé :</strong> /dé 1000 <br>
+        Chaque joueur lance un dé allant de 0 à 1000, puis additionne les chiffres de son résultat. Les zéros visibles comptent comme 10. <br>
+        <em>Exemples :</em> Un résultat de 347 donne 3 + 4 + 7 = 14. Un résultat de 902 donne 9 + 10 + 2 = 21.
+    </p>
+
+    <h3>Tours de Combat</h3>
+    <p>
+        Le combat est organisé en tours, alternant entre les joueurs et les ennemis.
+    </p>
+    <ul>
+        <li><strong>Tour des Alliés :</strong> Tous les joueurs agissent en même temps. Ils déclarent leurs actions (attaques, soins, etc.) et lancent leurs dés pour effectuer leurs actions.</li>
+        <li><strong>Résolution des actions des Alliés :</strong> Les actions sont résolues soit simultanément (s’ils s’organisent pour une attaque combinée) ou séquentiellement (dans l’ordre des déclarations).</li>
+        <li><strong>Tour des Ennemis :</strong> Après la résolution des actions des joueurs, c’est au tour du monstre d’attaquer.</li>
+        <li><strong>Résolution des actions des Ennemis :</strong> Les attaques des ennemis sont effectuées et résolues contre les joueurs, qui peuvent se défendre ou encaisser les dégâts en fonction de leurs jets.</li>
+    </ul>
+
+    <h3>Difficulté et Dégâts</h3>
+    <p>
+        <strong>Difficulté d’un monstre :</strong> Correspond à ses PV maximums. Par exemple, un monstre avec 25 PV a une difficulté de 25 à être touché.
+    </p>
+
+    <h4>Calcul des dégâts :</h4>
+    <ul>
+        <li>Si un joueur réussit à atteindre ou dépasser la difficulté du monstre avec son jet, il inflige des dégâts.</li>
+        <li>Si le joueur fait un jet égal à la difficulté (par exemple, un jet de 25 pour une difficulté de 25), il inflige 1 point de dégâts minimum.</li>
+        <li>Si le joueur fait un jet supérieur à la difficulté, la différence correspond aux dégâts infligés. <em>Exemple :</em> pour un jet de 28 contre une difficulté de 25, le joueur inflige 28 - 25 = 3 points de dégâts.</li>
+    </ul>
+    <p>
+        <strong>Diminution de la difficulté :</strong> À chaque attaque réussie, la difficulté du monstre diminue proportionnellement aux dégâts infligés. <em>Exemple :</em> Un monstre à 25 PV subit 3 points de dégâts, la nouvelle difficulté devient 22 pour les prochaines attaques.
+    </p>
+
+    <h3>Attaques combinées</h3>
+    <p>
+        <strong>Combinaison des jets :</strong> Les joueurs peuvent combiner leurs jets pour surmonter la difficulté d’un monstre. Leurs résultats sont additionnés pour dépasser la difficulté. <br>
+        <em>Exemple :</em> Joueur A fait 15 et Joueur B fait 16 → 15 + 16 = 31, ce qui dépasse la difficulté de 25.
+    </p>
+    <p>
+        <strong>Dégâts pour attaques combinées :</strong> Si les joueurs dépassent la difficulté avec une attaque combinée, la différence avec la difficulté est calculée normalement, mais les dégâts infligés sont divisés par deux pour éviter une élimination trop rapide du monstre. <br>
+        <em>Exemple :</em> 31 - 25 = 6 points de dégâts. Avec une division par deux, les joueurs infligent 6 / 2 = 3 points de dégâts.
+    </p>
+
+    <h3>Résistance du Monstre</h3>
+    <p>
+        Chaque monstre a une résistance générique, ce qui limite les dégâts qu'il peut subir lors d'attaques combinées.
+    </p>
+
+    <h4>Résistance proportionnelle :</h4>
+    <p>
+        La résistance est une réduction des dégâts infligés par les attaques combinées. <em>Exemple :</em> un monstre peut avoir une résistance de 50 %, ce qui signifie que les dégâts combinés infligent la moitié des dégâts calculés. <br>
+        <em>Exemple :</em> Si une attaque combinée devrait infliger 6 points de dégâts, un monstre avec une résistance de 50 % ne subira que 3 points de dégâts.
+    </p>
+    <p>
+        <strong>Diminution de la résistance :</strong> La résistance peut diminuer au fur et à mesure que le monstre perd des PV, rendant les attaques combinées plus efficaces sur la durée du combat.
+    </p>
+
+    <h4>Exemple de Combat Résumé</h4>
+    <p>
+        Monstre avec 25 PV et difficulté 25 :
+    </p>
+    <ul>
+        <li>Joueur A fait 15, Joueur B fait 16. Ils combinent leurs jets : 15 + 16 = 31 → la différence avec la difficulté de 25 est de 6 points.</li>
+        <li>Les dégâts sont divisés par deux pour une attaque combinée, donc le monstre subit 6 / 2 = 3 points de dégâts.</li>
+        <li>La nouvelle difficulté du monstre passe à 22.</li>
+    </ul>
+    <p>
+        <strong>Résistance :</strong> Si le monstre a une résistance de 50 %, il subit seulement 3 points de dégâts sur une attaque combinée qui aurait normalement infligé 6 points de dégâts.
+    </p>
+
+    <h4>Résumé des Règles Clés</h4>
+    <ul>
+        <li><strong>Dés utilisés :</strong> /dé 1000, addition des chiffres, les zéros comptent pour 10.</li>
+        <li><strong>Difficulté :</strong> PV max du monstre.</li>
+        <li><strong>Dégâts :</strong> Basés sur la différence entre le jet et la difficulté.</li>
+        <li><strong>Attaques combinées :</strong> Les joueurs peuvent combiner leurs jets, mais les dégâts sont divisés par deux.</li>
+        <li><strong>Résistance des monstres :</strong> Réduit les dégâts combinés (ex : 50 % des dégâts).</li>
+    </ul>
+</div>
 
 </body>
 </html>
