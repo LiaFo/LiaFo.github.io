@@ -22,6 +22,12 @@
         .monster-actions {
             margin-top: 10px;
         }
+        .status-container {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
         .result-box {
             margin-top: 10px;
             border: 1px solid #ccc;
@@ -119,6 +125,20 @@
                 <div>PV : <span class="hp">${hp}</span></div>
                 <div>Difficulté : <span class="difficulty">${difficulty}</span></div>
                 <div>Résistance : <span class="resistance">${resistance}</span>%</div>
+                
+                <!-- Conteneur pour les statuts -->
+                <div class="status-container">
+                    <strong>Statut :</strong> Aucun <br>
+                    <label for="status-effect">Effet :</label>
+                    <input type="text" class="status-effect" placeholder="ex: Défense réduite"><br><br>
+                    
+                    <label for="status-turns">Tours restants :</label>
+                    <input type="number" class="status-turns" min="0" value="0"><br><br>
+                    
+                    <button class="apply-status">Ajouter/Mettre à jour le statut</button><br><br>
+                    <div class="status-info"></div>
+                </div>
+
                 <div class="monster-actions">
                     <label for="damage">Infliger des dégâts :</label>
                     <input type="number" class="damage-input" min="0" value="0">
@@ -171,6 +191,24 @@
                     <strong>Difficulté du Monstre :</strong> ${difficulty}<br>
                     <strong>Dégâts potentiels :</strong> ${potentialDamage}
                 `;
+            });
+
+            // Ajouter ou mettre à jour un statut
+            const applyStatusBtn = monsterDiv.querySelector('.apply-status');
+            const statusEffectInput = monsterDiv.querySelector('.status-effect');
+            const statusTurnsInput = monsterDiv.querySelector('.status-turns');
+            const statusInfoDiv = monsterDiv.querySelector('.status-info');
+            applyStatusBtn.addEventListener('click', function () {
+                const statusEffect = statusEffectInput.value;
+                const statusTurns = parseInt(statusTurnsInput.value);
+                if (statusEffect && statusTurns > 0) {
+                    statusInfoDiv.innerHTML = `
+                        <strong>Effet :</strong> ${statusEffect}<br>
+                        <strong>Tours restants :</strong> ${statusTurns}
+                    `;
+                } else {
+                    statusInfoDiv.innerHTML = "<strong>Statut :</strong> Aucun";
+                }
             });
 
             // Supprimer un monstre
