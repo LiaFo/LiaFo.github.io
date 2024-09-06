@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiche d'aide au MJ - Gestion des Monstres</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .monster-list {
+            margin-top: 20px;
+        }
+        .monster {
+            border: 1px solid #000;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .monster-header {
+            font-weight: bold;
+        }
+        .monster-actions {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Fiche d'aide au MJ - Gestion des Monstres</h1>
+
+    <div>
+        <h2>Ajouter un Monstre</h2>
+        <form id="monster-form">
+            <label for="name">Nom du Monstre :</label>
+            <input type="text" id="name" required><br><br>
+            <label for="hp">Points de Vie (PV) :</label>
+            <input type="number" id="hp" required><br><br>
+            <label for="difficulty">Difficulté :</label>
+            <input type="number" id="difficulty" required><br><br>
+            <label for="resistance">Résistance (en %) :</label>
+            <input type="number" id="resistance" value="50" required><br><br>
+            <button type="submit">Ajouter Monstre</button>
+        </form>
+    </div>
+
+    <div class="monster-list">
+        <h2>Monstres en Combat</h2>
+        <div id="monster-container"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('monster-form');
+        const monsterContainer = document.getElementById('monster-container');
+
+        // Fonction pour ajouter un monstre
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const hp = parseInt(document.getElementById('hp').value);
+            const difficulty = parseInt(document.getElementById('difficulty').value);
+            let resistance = parseInt(document.getElementById('resistance').value);
+
+            addMonster(name, hp, difficulty, resistance);
+
+            form.reset();
+        });
+
+        // Fonction pour ajouter un monstre dans la liste
+        function addMonster(name, hp, difficulty, resistance) {
+            const monsterDiv = document.createElement('div');
+            monsterDiv.classList.add('monster');
+
+            const monsterInfo = `
+                <div class="monster-header">${name}</div>
+                <div>PV : <span class="hp">${hp}</span></div>
+                <div>Difficulté : <span class="difficulty">${difficulty}</span></div>
+                <div>Résistance : <span class="resistance">${resistance}</span>%</div>
+                <div class="monster-actions">
+                    <label for="damage">Infliger des dégâts :</label>
+                    <input type="number" class="damage-input" min="0" value="0">
+                    <button class="apply-damage">Appliquer</button><br><br>
+                    
+                    <label for="new-resistance">Modifier Résistance (%):</label>
+                    <input type="number" class="new-resistance" value="${resistance}" min="0" max="100"><br><br>
+                    
+                    <button class="delete-monster">Supprimer</button>
+                </div>
+            `;
+            monsterDiv.innerHTML = monsterInfo;
+
+            // Appliquer des dégâts
+            const damageInput = monsterDiv.querySelector('.damage-input');
+            const applyDamageBtn = monsterDiv.querySelector('.apply-damage');
+            applyDamageBtn.addEventListener('click', function () {
+                const damage = parseInt(damageInput.value);
+                const currentResistance = parseInt(monsterDiv.querySelector('.resistance').textContent);
+                applyDamage(monsterDiv, damage, currentResistance);
+            });
+
+            // Supprimer un monstre
+            const deleteBtn = monsterDiv.querySelector('.delete-monster');
+            deleteBtn.addEventListener('click', function () {
+                monsterContainer.removeChild(monsterDiv);
+            });
+
+            // Modifier la résistance
+            const resistanceInput = monsterDiv.querySelector('.new-resistance');
+            resistanceInput.addEventListener('input', function () {
+                const newResistance = parseInt(resistanceInput.value);
+                monsterDiv.querySelector('.resistance').textContent = newResistance;
+            });
+
+            monsterContainer.appendChild(monsterDiv);
+        }
+
+        // Fonction pour appliquer des dégâts à un monstre
+        function applyDamage(monsterDiv, damage, resistance) {
+            const hpSpan = monsterDiv.querySelector('.hp');
+            const difficultySpan = monsterDiv.querySelector('.difficulty');
+
+            let currentHp = parseInt(hpSpan.textContent);
+            let currentDifficulty = parseInt(difficultySpan.textContent);
+
+            // Appliquer la résistance et infliger les dégâts
+            const effectiveDamage = Math.round(damage * (1 - resistance / 100));
+            currentHp = Math.max(0, currentHp - effectiveDamage);
+            currentDifficulty = Math.max(0, currentDifficulty - effectiveDamage);
+
+            // Mettre à jour les valeurs
+            hpSpan.textContent = currentHp;
+            difficultySpan.textContent = currentDifficulty;
+        }
+    </script>
+
+</body>
+</html>
