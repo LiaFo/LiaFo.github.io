@@ -178,6 +178,7 @@
             const randInput = monsterDiv.querySelector('.rand-input');
             const calculateRandBtn = monsterDiv.querySelector('.calculate-rand');
             const resultBox = monsterDiv.querySelector('.result-box');
+
             calculateRandBtn.addEventListener('click', function () {
                 const randValues = randInput.value.split('+').map(rand => rand.trim()); // Diviser les résultats par "+"
                 const difficulty = parseInt(monsterDiv.querySelector('.difficulty').textContent);
@@ -185,12 +186,22 @@
                 const totalRand = calculatedResults.reduce((total, result) => total + result, 0); // Somme des résultats
                 const potentialDamage = Math.max(0, totalRand - difficulty);
 
-                // Afficher le résumé du calcul
-                resultBox.innerHTML = `
+                // Initialiser le message de résultat
+                let resultMessage = `
                     <strong>Résultats des Rands :</strong> ${calculatedResults.join(' + ')} = ${totalRand}<br>
                     <strong>Difficulté du Monstre :</strong> ${difficulty}<br>
                     <strong>Dégâts potentiels :</strong> ${potentialDamage}
                 `;
+
+                // Ajouter la mention d'échec ou de réussite critique
+                if (totalRand >= 0 && totalRand <= 4) {
+                    resultMessage += "<br><strong>Échec critique !</strong>";
+                } else if (totalRand >= 26 && totalRand <= 31) {
+                    resultMessage += "<br><strong>Réussite critique !</strong>";
+                }
+
+                // Afficher le résultat
+                resultBox.innerHTML = resultMessage;
             });
 
             // Ajouter ou mettre à jour un statut
