@@ -27,6 +27,32 @@
             border: 1px solid #ccc;
             padding: 10px;
         }
+        /* Style pour les icônes d'aide */
+        .help-icon {
+            display: inline-block;
+            background-color: #ccc;
+            border-radius: 50%;
+            padding: 2px;
+            font-size: 10px;
+            width: 10px;
+            height: 10px;
+            text-align: center;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .help-popup {
+            display: none;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            position: absolute;
+            z-index: 10;
+            width: 250px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .help-popup.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -37,13 +63,25 @@
         <h2>Ajouter un Monstre</h2>
         <form id="monster-form">
             <label for="name">Nom du Monstre :</label>
-            <input type="text" id="name" required><br><br>
+            <input type="text" id="name" required>
+            <span class="help-icon" data-help="name">?</span>
+            <div class="help-popup" id="help-name">Nom unique pour identifier le monstre en combat.</div><br><br>
+
             <label for="hp">Points de Vie (PV) :</label>
-            <input type="number" id="hp" required><br><br>
+            <input type="number" id="hp" required>
+            <span class="help-icon" data-help="hp">?</span>
+            <div class="help-popup" id="help-hp">Les PV représentent la santé totale du monstre.</div><br><br>
+
             <label for="difficulty">Difficulté :</label>
-            <input type="number" id="difficulty" required><br><br>
+            <input type="number" id="difficulty" required>
+            <span class="help-icon" data-help="difficulty">?</span>
+            <div class="help-popup" id="help-difficulty">La difficulté est généralement égale aux PV maximums du monstre. Elle diminue lorsque le monstre subit des dégâts.</div><br><br>
+
             <label for="resistance">Résistance (en %) :</label>
-            <input type="number" id="resistance" value="50" required><br><br>
+            <input type="number" id="resistance" value="50" required>
+            <span class="help-icon" data-help="resistance">?</span>
+            <div class="help-popup" id="help-resistance">La résistance réduit les dégâts combinés subis par le monstre.</div><br><br>
+
             <button type="submit">Ajouter Monstre</button>
         </form>
     </div>
@@ -190,7 +228,21 @@
             });
             return total;
         }
+
+        // Gestion des popups d'aide
+        const helpIcons = document.querySelectorAll('.help-icon');
+        helpIcons.forEach(icon => {
+            icon.addEventListener('mouseenter', function() {
+                const helpId = icon.getAttribute('data-help');
+                document.getElementById(`help-${helpId}`).classList.add('active');
+            });
+            icon.addEventListener('mouseleave', function() {
+                const helpId = icon.getAttribute('data-help');
+                document.getElementById(`help-${helpId}`).classList.remove('active');
+            });
+        });
     </script>
+
 <div class="combat-system">
     <h3>Le Système de Dés</h3>
     <p>
